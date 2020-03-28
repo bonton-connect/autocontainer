@@ -1,5 +1,5 @@
 import unittest
-from src.autocontainer import Container
+from autocontainer.autocontainer import Container
 
 
 class A:

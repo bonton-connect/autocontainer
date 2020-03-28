@@ -7,8 +7,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='autocontainer',
-    packages=['src'],
-    version='1.0.3',
+    packages=['autocontainer'],
+    version='1.0.4',
     license='MIT',
     description='A modern typing based service container and dependency injector.',
     long_description=long_description,
@@ -16,7 +16,7 @@ setup(
     author='Omran Jamal',
     author_email='o.jamal97@gmail.com', 
     url='https://github.com/Hedronium/autocontainer',
-    download_url='https://github.com/Hedronium/autocontainer/archive/v1.0.3.tar.gz',
+    download_url='https://github.com/Hedronium/autocontainer/archive/v1.0.4.tar.gz',
     keywords=['container', 'dependency', 'injection', 'inversion', 'control', 'service'],
     python_requires='>=3.5',
     classifiers=[
