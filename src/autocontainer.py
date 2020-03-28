@@ -101,6 +101,9 @@ class Container:
 			else:
 				raise ServiceResolutionException(f'{key} does not exist.')
 
+		else:
+			raise ServiceResolutionException(f'{service} does not exist.')
+
 		while 'subs' in entry and len(entry['subs']) == 1:
 			entry = self._graph[list(entry['subs'])[0]]
 
