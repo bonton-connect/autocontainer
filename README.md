@@ -11,6 +11,9 @@ that "just works". Alas, welcome to **autocontainer** for python. The dependency
 pip3 install autocontainer
 ```
 
+Requirements:
+- >= Python 3.5
+
 ## Usage
 
 It's all about types and hints, but first create the container
@@ -21,37 +24,6 @@ from autocontianer import Container
 container = Container()
 ```
 
-### Available Methods
-
-- `get(service: Union[Type, str])`
-	Retreives a service
-
-- `has(service: Union[Type, str])`  
-	Returns if a service exists
-
-- `singleton(service: Union[Type, Callable[..., Instance]], name?: str)`  
-	Adds a service as a singleton into container.
-	(Returns the same object on every `get`)
-
-- `factory(service: Union[Type, Callable[..., Instance]], name?: str)`  
-	Adds a service as a factory into container.
-	(Returns a fresh object on every `get`)
-
-- `instance(service: object, name?: str)`  
-	Adds a service as an instance into container.
-	(Returns the same object on every `get`, but does not try to instantiate)
-
-- `assembler(service: Union[Type, Callable[..., Instance]], name?: str)`  
-	Adds a service such that on every get, the container returns a _bound_ callable
-	that produces a fresh object everytime.
-
-- `bind(func: Callable)`  
-	Returns a new callable but in which the arguments recognized by the container
-	are automatically pushed when calling. (see examples below)
-
-- `inject(func: Callable)`  
-	Takes a callable and calls it by injecting all the services it requires
-	and then returns the return value.
 
 ### Classes & Injection
 
@@ -238,6 +210,38 @@ def magic(ap: 'apple'):
 
 container.inject(magic)
 ```
+
+## Available Methods
+
+- `get(service: Union[Type, str])`
+	Retreives a service
+
+- `has(service: Union[Type, str])`  
+	Returns if a service exists
+
+- `singleton(service: Union[Type, Callable[..., Instance]], name?: str)`  
+	Adds a service as a singleton into container.
+	(Returns the same object on every `get`)
+
+- `factory(service: Union[Type, Callable[..., Instance]], name?: str)`  
+	Adds a service as a factory into container.
+	(Returns a fresh object on every `get`)
+
+- `instance(service: object, name?: str)`  
+	Adds a service as an instance into container.
+	(Returns the same object on every `get`, but does not try to instantiate)
+
+- `assembler(service: Union[Type, Callable[..., Instance]], name?: str)`  
+	Adds a service such that on every get, the container returns a _bound_ callable
+	that produces a fresh object everytime.
+
+- `bind(func: Callable)`  
+	Returns a new callable but in which the arguments recognized by the container
+	are automatically pushed when calling. (see examples below)
+
+- `inject(func: Callable)`  
+	Takes a callable and calls it by injecting all the services it requires
+	and then returns the return value.
 
 ## Running Tests
 ```bash
