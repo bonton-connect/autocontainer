@@ -5,6 +5,23 @@
 Python really needed a modern reflection based dependency injection container
 that "just works". Alas, welcome to **AutoContainer** for python. The dependency injection service contaienr that just works.
 
+## Features
+
+- Direct class as service
+- Separate provider functions
+- Service Behaviors:
+    - Singleton
+    - Factory
+    - Assembler
+    - Instance
+- Naming Services
+- Container Bound Functions
+- Dependency Graph
+- Automatic Injection
+- Service registration checking
+- Inject typehint by name
+- Primitive types by name
+
 ## Installation
 
 ```bash

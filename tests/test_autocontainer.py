@@ -219,3 +219,18 @@ class TestContainer(unittest.TestCase):
         assert D not in self.container
 
 
+
+    def test_it_should_throw_on_annotation_return_mismatch(self):
+        class A:
+            pass
+
+        class B:
+            pass
+
+        def makeA() -> A:
+            return B()
+
+        self.container.singleton(makeA)
+        self.assertRaises(AssertionError, lambda: self.container.get(A))
+
+

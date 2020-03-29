@@ -13,14 +13,16 @@ class ServiceResolutionException(Exception):
 
 
 class Singleton:
-	def __init__(self, injector, service):
+	def __init__(self, injector, service, cls):
 		self._obj = None
 		self.inject = injector
 		self.service = service
+		self.cls = cls
 
 	def __call__(self):
 		if self._obj is None:
 			self._obj = self.inject(self.service)
+			assert isinstance(self._obj, self.cls)
 
 		return self._obj
 
@@ -157,10 +159,15 @@ class Container:
 		init: Callable = None
 
 		if mode == 'singleton':
-			init = Singleton(self.inject, service)
+			init = Singleton(self.inject, service, cls)
 
 		elif mode == 'factory':
-			init = lambda: self.inject(service)
+			def maker():
+				obj = self.inject(service)
+				assert isinstance(obj, cls)
+				return obj
+
+			init = maker
 
 		elif mode == 'assembler':
 			init = lambda: self.bind(service)
