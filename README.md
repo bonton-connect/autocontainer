@@ -1,9 +1,9 @@
 
 
-# autocontainer
+# AutoContainer
 
 Python really needed a modern reflection based dependency injection container
-that "just works". Alas, welcome to **autocontainer** for python. The dependency injection service contaienr that just works.
+that "just works". Alas, welcome to **AutoContainer** for python. The dependency injection service contaienr that just works.
 
 ## Installation
 
@@ -12,7 +12,7 @@ pip3 install autocontainer
 ```
 
 Requirements:
-- >= Python 3.5
+- Python >= 3.5
 
 ## Usage
 
@@ -22,6 +22,8 @@ It's all about types and hints, but first create the container
 from autocontianer import Container
 
 container = Container()
+
+# Party Time
 ```
 
 
