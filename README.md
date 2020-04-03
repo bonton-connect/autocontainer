@@ -36,7 +36,7 @@ Requirements:
 It's all about types and hints, but first create the container
 
 ```python
-from autocontianer import Container
+from autocontainer import Container
 
 container = Container()
 
@@ -182,7 +182,7 @@ def crazy_function(a: A, b: B):
 
     return 'potato'
 
-assert contianer.inject(crazy_function) == 'potato'
+assert container.inject(crazy_function) == 'potato'
 ```
 
 
