@@ -3,7 +3,7 @@
 # AutoContainer
 
 Python really needed a modern reflection based dependency injection container
-that "just works". Alas, welcome to **AutoContainer** for python. The dependency injection service contaienr that just works.
+that "just works". Alas, welcome to **AutoContainer** for python. The dependency injection service container that just works.
 
 ## Features
 
