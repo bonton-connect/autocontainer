@@ -157,7 +157,7 @@ def crazy_function(a: A, repeating: str, b: B, times: int):
     assert isinstance(a, A)
     assert isinstance(b, B)
 
-    return repeating * time
+    return repeating * times
 
 less_crazy_function = container.bind(crazy_function)
 
