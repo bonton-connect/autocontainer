@@ -25,7 +25,7 @@ that "just works". Alas, welcome to **AutoContainer** for python. The dependency
 ## Installation
 
 ```bash
-pip3 install autocontainer
+pip install autocontainer
 ```
 
 Requirements:
@@ -63,6 +63,9 @@ container.singleton(A)
 obj_b = container.get(B)
 assert isinstance(obj_b, B)
 ```
+
+**Note:** The container actually contains itself as a singleton service (it's the first registered service), hence if you typehint
+the `Container` class or any derivateives, the container can and will inject itself.
 
 ### Naming Services
 
@@ -161,6 +164,8 @@ less_crazy_function = container.bind(crazy_function)
 result = less_crazy_function("pew", 3)
 assert result == 'pewpewpew'
 ```
+
+This works for both classes (class constructors) and for functions.
 
 ### Injecting
 
