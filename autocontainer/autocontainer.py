@@ -1,11 +1,27 @@
-from typing import Type, TypeVar, Any, Callable, Union, List
+from typing import Type, TypeVar, Any, Callable, Union, List, NamedTuple, Set, Literal
 from inspect import Signature
 import inspect
-import importlib
 
 ReturnType = TypeVar('ReturnType')
 GettingType = TypeVar('GettingType')
 ServiceableType = Union[str, Type, Callable, object]
+
+class NamedEntry(NamedTuple):
+	name: str
+	init: Union[Callable, None]
+
+class GraphEntry(NamedTuple):
+	name: str
+	subs: Set
+	init: Union[Callable, None]
+
+Mode = Union[
+	Literal['singleton'],
+	Literal['assembler'],
+	Literal['singleton'],
+	Literal['factory'],
+	Literal['instance'],
+]
 
 
 class ServiceResolutionException(Exception):
@@ -56,7 +72,7 @@ class BoundCall:
 		return self._cal(**params)
 
 
-def isNative(var) -> bool:
+def is_native(var) -> bool:
 	return isinstance(var, str)	\
 		or isinstance(var, list) \
 		or isinstance(var, dict) \
@@ -66,18 +82,17 @@ def isNative(var) -> bool:
 		or isinstance(var, bool)
 
 
-def getImportName(cls: Type) -> str:
+def get_import_name(cls: Type) -> str:
 	return f'{cls.__module__}.{cls.__name__}'
-
 
 class Container:
 	def __init__(self):
-		self._graph = {}
-		self._named = {}
+		self._graph: dict[str, GraphEntry] = {}
+		self._named: dict[str, Union[NamedEntry, str]] = {}
 
 		self.instance(self, 'container')
 
-	def get(self, service: Union[str, Type[GettingType]], for_obj: Any = None) -> GettingType:
+	def get(self, service: Union[str, Type[GettingType]]) -> GettingType:
 		entry = None
 
 		if isinstance(service, str):
@@ -96,7 +111,7 @@ class Container:
 				raise ServiceResolutionException(f'{service} does not exist.')
 
 		elif inspect.isclass(service):
-			key = getImportName(service)
+			key = get_import_name(service)
 
 			if key in self._graph:
 				entry = self._graph[key]
@@ -106,27 +121,19 @@ class Container:
 		else:
 			raise ServiceResolutionException(f'{service} does not exist.')
 
-		while 'subs' in entry and len(entry['subs']) == 1:
-			entry = self._graph[list(entry['subs'])[0]]
+		while 'subs' in entry and len(entry.subs) == 1:
+			entry = self._graph[list(entry.subs)[0]]
 
-		if 'subs' in entry and len(entry['subs']) > 1:
-			alternatives = ", ".join(list(entry['subs']))
+		if 'subs' in entry and len(entry.subs) > 1:
+			alternatives = ", ".join(list(entry.subs))
 			raise ServiceResolutionException(f'Too many candidates for {service}, like: {alternatives}')
 
-		return entry['init']()
+		return entry.init()
 
-	def _addEntry(self, service: ServiceableType, mode: str, name: str = False):
+	def _add_entry(self, service: ServiceableType, mode: Mode, name: Union[str, False] = False):
 		cls = None
 
-		if isinstance(service, str):
-			mod = inspect.getmodule(inspect.stack()[1].frame).__name__
-			package: str = importlib.import_module(('.' if service[0] is '.' else '') + service, mod)
-			module = importlib.import_module(package)
-
-			cls = getattr(module, package.split('.')[-1])
-			service = cls
-
-		elif inspect.isclass(service):
+		if inspect.isclass(service):
 			cls = service
 
 		elif inspect.isfunction(service):
@@ -135,20 +142,22 @@ class Container:
 			if return_type is Signature.empty:
 				assert name, 'Must include service name as there is no return type annotation.'
 
-				self._named[name] = dict(
+				self._named[name] = NamedEntry(
 					name=name,
 					init=lambda: service
 				)
 			else:
 				cls = return_type
 
-		elif isinstance(service, object) and not isNative(service):
+		elif isinstance(service, object) and not is_native(service):
 			cls = service.__class__
 
-		key = getImportName(cls)
-		entry = dict(
+		key = get_import_name(cls)
+
+		entry = GraphEntry(
 			name=key,
-			subs=set()
+			subs=set(),
+			init=None
 		)
 
 		self._graph[key] = entry
@@ -156,7 +165,7 @@ class Container:
 		if name:
 			self._named[name] = key
 
-		init: Callable = None
+		init: Union[Callable, None] = None
 
 		if mode == 'singleton':
 			init = Singleton(self.inject, service, cls)
@@ -175,52 +184,53 @@ class Container:
 		elif mode == 'instance':
 			init = lambda: service
 
-		entry['init'] = init
+		entry.init = init
 
-		self._updateGraph(cls)
+		self._update_graph(cls)
 
-	def _updateGraph(self, cls: Type):
+	def _update_graph(self, cls: Type):
 		if cls is object:
 			return
 
-		key = getImportName(cls)
+		key = get_import_name(cls)
 		bases = cls.__bases__
 
 		for base in bases:
 			if base is cls:
 				continue
 
-			base_key = getImportName(base)
+			base_key = get_import_name(base)
 
 			if base_key not in self._graph:
-				self._graph[base_key] = dict(
+				self._graph[base_key] = GraphEntry(
 					name=base_key,
-					subs=set()
+					subs=set(),
+					init=None
 				)
 
-			self._graph[base_key]['subs'].add(key)
-			self._updateGraph(base)
+			self._graph[base_key].subs.add(key)
+			self._update_graph(base)
 
-	def singleton(self, service: ServiceableType, name: str = False) -> None:
-		self._addEntry(service, 'singleton', name)
+	def singleton(self, service: ServiceableType, name: Union[str, False] = False) -> None:
+		self._add_entry(service, 'singleton', name)
 
-	def factory(self, service: ServiceableType, name: str = False) -> None:
-		self._addEntry(service, 'factory', name)
+	def factory(self, service: ServiceableType, name: Union[str, False] = False) -> None:
+		self._add_entry(service, 'factory', name)
 
-	def assembler(self, service: ServiceableType, name: str = False) -> None:
-		self._addEntry(service, 'assembler', name)
+	def assembler(self, service: ServiceableType, name: Union[str, False] = False) -> None:
+		self._add_entry(service, 'assembler', name)
 
-	def instance(self, service: Any, name: str = False) -> None:
-		if isNative(service):
+	def instance(self, service: Any, name: Union[str, False] = False) -> None:
+		if is_native(service):
 			assert name, 'Name must be specified as it is not an instance.'
 
-			self._named[name] = dict(
+			self._named[name] = NamedEntry(
 				name=name,
 				init=lambda: service
 			)
 
 		elif isinstance(service, object):
-			self._addEntry(service, 'instance', name)
+			self._add_entry(service, 'instance', name)
 
 	def has(self, service: ServiceableType) -> bool:
 		try:
@@ -237,7 +247,7 @@ class Container:
 			annotation = params[param].annotation
 
 			if annotation not in [int, str, bool, float, list, dict, tuple] and self.has(annotation):
-				calling_args[param] = self.get(annotation, cal)
+				calling_args[param] = self.get(annotation)
 			else:
 				unknown_params.append(param)
 
@@ -248,19 +258,19 @@ class Container:
 		params = inspect.signature(cal).parameters
 
 		for param in params:
-			calling_args[param] = self.get(params[param].annotation, cal)
+			calling_args[param] = self.get(params[param].annotation)
 
 		return cal(**calling_args)
 
-	def __contains__(self, item):
+	def __contains__(self, item: Union[str, Type[GettingType]]):
 		return self.has(item)
 
-	def __getattr__(self, name: str) -> Any:
-		if name in self.__dict__:
-			return self.__dict__[name]
+	def __getattr__(self, item: Union[str, Type[GettingType]]) -> Any:
+		if isinstance(item, str) and item in self.__dict__:
+			return self.__dict__[item]
 
-		return self.get(name)
+		return self.get(item)
 
-	def __call__(self, item):
+	def __call__(self, item: Union[str, Type[GettingType]]):
 		return self.get(item)
 
